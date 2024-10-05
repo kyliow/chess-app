@@ -8,7 +8,7 @@ from figures import FigureUtils
 
 
 def main():
-    streamlit.title("Chess App")
+    streamlit.title("Chess Review App")
 
     username = streamlit.sidebar.text_input(label="Chess.com username:")
 
@@ -29,6 +29,8 @@ def main():
         chess_utils.delete_all_analysed_games()
 
     all_games = chess_utils.load_all_games()
+    if all_games is None:
+        return
 
     chosen_game_key = streamlit.selectbox("Choose a game.", all_games)
 

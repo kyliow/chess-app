@@ -58,6 +58,13 @@ class ChessUtils:
 
         response_json = self._download_games_from_url()
 
+        if response_json is None:
+            streamlit.error(
+                "Unable to query games from username given. Please input the correct username.",
+                icon="🚨",
+            )
+            return None
+
         all_games = {}
         for response_game in response_json["games"][::-1]:
             pgn_file = io.StringIO(response_game["pgn"])
@@ -139,7 +146,6 @@ class ChessUtils:
         filename = f"{game_key[:21]}.csv"
 
         try:
-            raise (Exception)
             data = pandas.read_csv(path + filename)
             progress_bar.progress(1.0, "Analysis loaded.")
 
