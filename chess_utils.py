@@ -26,7 +26,7 @@ class ChessUtils:
     def __init__(self, username: str, year: int, month: int):
         self.model = Stockfish(
             path=str(Path.cwd() / "stockfish.exe"),
-            parameters={"UCI_Elo": 3250, "Hash": 64},
+            parameters={"UCI_Elo": 3250},
             depth=15,
         )
         self.username = username
