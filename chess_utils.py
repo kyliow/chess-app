@@ -24,6 +24,7 @@ LOSE_SYMBOL = "⛔"
 
 class ChessUtils:
     def __init__(self, username: str, year: int, month: int):
+        streamlit.write(Path.cwd())
         self.model = Stockfish(
             path=str(Path.cwd() / "stockfish.exe"),
             parameters={"UCI_Elo": 3250},
@@ -142,7 +143,7 @@ class ChessUtils:
     def create_game_dataframe(
         self, game_key: str, progress_bar: DeltaGenerator
     ) -> pandas.DataFrame:
-        path = "analysed_games\\"
+        path = str(Path.cwd() / "analysed_games")
         filename = f"{game_key[:21]}.csv"
 
         try:
@@ -212,7 +213,7 @@ class ChessUtils:
 
     @staticmethod
     def delete_all_analysed_games():
-        csv_files = glob.glob("analysed_games\\*.csv")
+        csv_files = list((Path.cwd() / "analysed_games").glob("*.csv"))
         for file in csv_files:
             os.remove(file)
         streamlit.success("Sucessfully delete all analysed games!", icon="✅")
