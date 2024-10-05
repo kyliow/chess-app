@@ -5,12 +5,14 @@ import urllib.request
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Tuple
+import os
 
 import pandas
 import streamlit
 from chess import pgn
 from stockfish import Stockfish
 from streamlit.delta_generator import DeltaGenerator
+import glob
 
 WHITE_SYMBOL = "⬜"
 BLACK_SYMBOL = "⬛"
@@ -133,7 +135,7 @@ class ChessUtils:
     def create_game_dataframe(
         self, game_key: str, progress_bar: DeltaGenerator
     ) -> pandas.DataFrame:
-        path = "C:\\Users\\kongy\\Desktop\\chess-app\\analysed_games\\"
+        path = "analysed_games\\"
         filename = f"{game_key[:21]}.csv"
 
         try:
@@ -201,6 +203,13 @@ class ChessUtils:
             progress_bar.progress(1.0, "Analysis completed and saved.")
 
         return data
+
+    @staticmethod
+    def delete_all_analysed_games():
+        csv_files = glob.glob("analysed_games\\*.csv")
+        for file in csv_files:
+            os.remove(file)
+        streamlit.success("Sucessfully delete all analysed games!", icon="✅")
 
 
 if __name__ == "__main__":
