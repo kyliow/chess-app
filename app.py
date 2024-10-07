@@ -10,15 +10,13 @@ from figures import FigureUtils
 def main():
     streamlit.title("Chess Review App")
 
-    username = streamlit.sidebar.text_input(label="Chess.com username:")
+    username = streamlit.text_input(label="Chess.com username:")
 
-    streamlit.sidebar.write(
-        "Input year and month to download the PGN file from Chess.com:"
-    )
-    year = streamlit.sidebar.number_input(
+    col1, col2 = streamlit.columns(2)
+    year = col1.number_input(
         label="Year:", value=datetime.today().year, max_value=datetime.today().year
     )
-    month = streamlit.sidebar.number_input(
+    month = col2.number_input(
         label="Month:", value=datetime.today().month, min_value=1, max_value=12
     )
     is_delete_all_analysed_games = streamlit.sidebar.button("Delete all analysed games")        

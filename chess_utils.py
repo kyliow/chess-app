@@ -152,7 +152,7 @@ class ChessUtils:
         self, game_key: str, progress_bar: DeltaGenerator
     ) -> pandas.DataFrame:
         path = Path.cwd() / "analysed_games"
-        filename = f"{game_key[:21]}.csv"
+        filename = f"{self.username} - {game_key[:21]}.csv"
 
         try:
             data = pandas.read_csv(path / filename)
