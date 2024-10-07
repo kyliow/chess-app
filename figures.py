@@ -13,17 +13,17 @@ class FigureUtils:
 
     def get_evaluation_graph(self):
         white_eval_to_display = numpy.where(
-            self.data["evaluation_type"] == "cp",
-            self.data["evaluation_value"].clip(lower=-400, upper=400),
+            self.data["eval"].notnull(),
+            self.data["eval"].clip(lower=-4.00, upper=4.00),
             numpy.where(
-                self.data["evaluation_type"] == "mate",
-                numpy.where(self.data["evaluation_value"] >= 0, 450, -450),
-                self.data["evaluation_value"],
+                self.data["mate"].notnull(),
+                numpy.where(self.data["mate"] >= 0, 4.50, -4.50),
+                self.data["eval"],
             ),
         )
 
-        if self.data.iloc[-1]["evaluation_value"] == 0:
-            white_eval_to_display[-1] = white_eval_to_display[-2]
+        # if self.data.iloc[-1]["evaluation_value"] == 0:
+        #     white_eval_to_display[-1] = white_eval_to_display[-2]
 
         df = pandas.DataFrame(
             {"ply": self.data.index, "evaluation_to_display": white_eval_to_display}
@@ -33,7 +33,7 @@ class FigureUtils:
         fig.add_trace(
             graph_objects.Scatter(
                 x=df["ply"],
-                y=[450] * len(df),
+                y=[4.5] * len(df),
                 fill=None,
                 mode="lines",
                 line_color="rgba(0,0,0,0)",
@@ -54,7 +54,7 @@ class FigureUtils:
         fig.add_trace(
             graph_objects.Scatter(
                 x=df["ply"],
-                y=[-450] * len(df),
+                y=[-4.5] * len(df),
                 fill="tonexty",
                 mode="lines",
                 line_color="rgba(0,0,0,0)",

@@ -1,8 +1,9 @@
-import glob
 import io
 import json
 import os
+import re
 import urllib
+import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -11,7 +12,6 @@ from typing import Dict, Tuple
 import pandas
 import streamlit
 from chess import pgn
-from stockfish import Stockfish
 from streamlit.delta_generator import DeltaGenerator
 
 WHITE_SYMBOL = "⬜"
@@ -24,12 +24,6 @@ LOSE_SYMBOL = "⛔"
 
 class ChessUtils:
     def __init__(self, username: str, year: int, month: int):
-        streamlit.write(os.listdir())
-        self.model = Stockfish(
-            path=str(Path.cwd() / "stockfish-ubuntu"),
-            parameters={"UCI_Elo": 3250},
-            depth=15,
-        )
         self.username = username
         self.year = year
         self.month = month
@@ -140,15 +134,28 @@ class ChessUtils:
 
         return diff, descriptor
 
+    def _get_evaluation_from_stockfish_api(self, fen: str, depth: int = 12) -> Dict:
+        stockfish_api_url = "https://stockfish.online/api/s/v2.php"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
+        }
+        params = {"fen": fen, "depth": depth}
+
+        request = urllib.request.Request(
+            f"{stockfish_api_url}?{urllib.parse.urlencode(params)}", headers=headers
+        )
+        response = urllib.request.urlopen(request)
+
+        return json.loads(response.read().decode("utf-8"))
+
     def create_game_dataframe(
         self, game_key: str, progress_bar: DeltaGenerator
     ) -> pandas.DataFrame:
-        path = str(Path.cwd() / "analysed_games")
+        path = Path.cwd() / "analysed_games"
         filename = f"{game_key[:21]}.csv"
 
         try:
-            raise (Exception)
-            data = pandas.read_csv(path + filename)
+            data = pandas.read_csv(path / filename)
             progress_bar.progress(1.0, "Analysis loaded.")
 
         except Exception:
@@ -157,58 +164,43 @@ class ChessUtils:
 
             total_plies = len(game.end().board().move_stack)
 
-            wdl_stats = []
-            for i, move in enumerate(game.mainline_moves()):
+            board = game.board()
+            fen_list = [board.fen()]
+            for i, ply in enumerate(game.mainline_moves()):
                 progress_bar.progress(
                     i / total_plies, "Analysis in progress. Please wait."
                 )
 
-                best_move = self.model.get_best_move()
+                # Get evaluation of the previous ply
+                result = self._get_evaluation_from_stockfish_api(fen=fen_list[-1])
+                if result["success"]:
+                    best_move = re.search(
+                        r"bestmove\s([a-h][1-8][a-h][1-8])", result["bestmove"]
+                    ).group(1)
+                    sub_data = pandas.DataFrame(
+                        {
+                            "player": [i % 2],
+                            "move": [ply],
+                            "eval": [result["evaluation"]],
+                            "mate": [result["mate"]],
+                            "best_move": [best_move],
+                            "continuation": [result["continuation"]],
+                        }
+                    )
+                else:
+                    streamlit.write(result)
+                    streamlit.write(fen_list[-1])
+                    streamlit.write(f"i - {result['error']}")
+                    sub_data = pandas.DataFrame()
 
-                if not wdl_stats:
-                    wdl_stats.append(self.model.get_wdl_stats())
+                board.push(ply)
 
-                winning_probability_before = (wdl_stats[-1][0]) / sum(wdl_stats[-1])
+                fen = board.fen()
+                fen_list.append(fen)
 
-                self.model.make_moves_from_current_position([move])
+                data = pandas.concat([data, sub_data], ignore_index=True)
 
-                wdl_stats.append(self.model.get_wdl_stats())
-                winning_probability_after = (
-                    (wdl_stats[-1][2]) / sum(wdl_stats[-1])
-                    if wdl_stats[-1] is not None
-                    else winning_probability_before
-                )
-
-                evaluation = self.model.get_evaluation()
-
-                previous_descriptor = (
-                    None if data.empty else data.iloc[-1]["descriptor"]
-                )
-                win_prob_down, descriptor = self._describe_move(
-                    winning_probability_before=winning_probability_before,
-                    winning_probability_after=winning_probability_after,
-                    current_move=move,
-                    best_move=best_move,
-                    previous_descriptor=previous_descriptor,
-                )
-
-                new_row = pandas.DataFrame(
-                    {
-                        "player": [i % 2],
-                        "move": [move],
-                        "evaluation_type": [evaluation["type"]],
-                        "evaluation_value": [evaluation["value"]],
-                        "best_move": [best_move],
-                        "wdl_before": [wdl_stats[-2]],
-                        "wdl_after": [wdl_stats[-1]],
-                        "win_prob_down": [win_prob_down],
-                        "descriptor": [descriptor],
-                    }
-                )
-                data = pandas.concat([data, new_row], ignore_index=True)
-
-            data.to_csv(path + filename)
-
+            data.to_csv(path / filename, index_label=False)
             progress_bar.progress(1.0, "Analysis completed and saved.")
 
         return data
