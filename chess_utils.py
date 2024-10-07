@@ -26,7 +26,7 @@ class ChessUtils:
     def __init__(self, username: str, year: int, month: int):
         streamlit.write(os.listdir())
         self.model = Stockfish(
-            path=str(Path.cwd() / "stockfish.exe"),
+            path=str(Path.cwd() / "stockfish-ubuntu"),
             parameters={"UCI_Elo": 3250},
             depth=15,
         )
