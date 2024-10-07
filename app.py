@@ -58,11 +58,11 @@ def main():
         game_key=chosen_game_key, progress_bar=progress_bar
     )
 
-    streamlit.data_editor(data)
+    # streamlit.data_editor(data)
 
-    streamlit.write("### Evaluation Graph")
-    fig_utils = FigureUtils(data=data)
-    _ = fig_utils.get_evaluation_graph()
+    # streamlit.write("### Evaluation Graph")
+    # fig_utils = FigureUtils(data=data)
+    # _ = fig_utils.get_evaluation_graph()
 
     # if "chess_board_images" not in streamlit.session_state:
     #     is_player_white = WHITE_SYMBOL in chosen_game_key

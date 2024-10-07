@@ -1,18 +1,18 @@
+import glob
 import io
 import json
+import os
 import urllib
 import urllib.request
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Tuple
-import os
 
 import pandas
 import streamlit
 from chess import pgn
 from stockfish import Stockfish
 from streamlit.delta_generator import DeltaGenerator
-import glob
 
 WHITE_SYMBOL = "⬜"
 BLACK_SYMBOL = "⬛"
@@ -24,7 +24,7 @@ LOSE_SYMBOL = "⛔"
 
 class ChessUtils:
     def __init__(self, username: str, year: int, month: int):
-        streamlit.write(Path.cwd())
+        streamlit.write(os.listdir())
         self.model = Stockfish(
             path=str(Path.cwd() / "stockfish.exe"),
             parameters={"UCI_Elo": 3250},
@@ -147,12 +147,14 @@ class ChessUtils:
         filename = f"{game_key[:21]}.csv"
 
         try:
+            raise (Exception)
             data = pandas.read_csv(path + filename)
             progress_bar.progress(1.0, "Analysis loaded.")
 
         except Exception:
             game: pgn.Game = self.all_games[game_key]
             data = pandas.DataFrame()
+
             total_plies = len(game.end().board().move_stack)
 
             wdl_stats = []
